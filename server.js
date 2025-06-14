@@ -8,6 +8,10 @@ app.use(cors());
 
 const PEXELS_API_KEY = 'uTM8SiDa01MkJsl2qdEBAj0S2FK8hmJrRXVNZAkXQ9yYPVR0LMxj8GPl';
 
+app.get('/', (req, res) => {
+  res.send('Welcome to Fast & Fabulous');
+});
+
 app.get('/api/girls', async (req, res) => {
   try {
     const response = await axios.get('https://api.pexels.com/v1/search', {
