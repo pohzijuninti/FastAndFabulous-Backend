@@ -89,6 +89,86 @@ app.get('/get/bookmarks/cars', async (req, res) => {
   }
 });
 
+// DELETE car bookmarks 
+app.delete('/delete/bookmarks/cars/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedCar = await CarBookmark.findOneAndDelete({ id });
+
+    if (!deletedCar) {
+      return res.status(404).json({ error: 'Car not found' });
+    }
+
+    res.json({
+      message: 'Car deleted',
+      deleted: {
+        id: deletedCar.id,
+        make: deletedCar.make,
+        model: deletedCar.model,
+        class: deletedCar.class,
+        year: deletedCar.year,
+        cylinders: deletedCar.cylinders,
+        displacement: deletedCar.displacement,
+        image: deletedCar.image,
+      },
+    });
+  } catch (err) {
+    console.error('Error deleting car:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// UPDATE car bookmark
+app.put('/update/bookmarks/cars/:id', async (req, res) => {
+  const { id } = req.params;
+  const {
+    class: carClass,
+    cylinders,
+    displacement,
+    make,
+    model,
+    year,
+  } = req.body;
+
+  // Optional validation (you can expand this)
+  if (
+    !carClass || !make || !model ||
+    typeof cylinders !== 'number' ||
+    typeof displacement !== 'number' ||
+    typeof year !== 'number'
+  ) {
+    return res.status(400).json({ error: 'Invalid or missing fields' });
+  }
+
+  try {
+    const updatedCar = await CarBookmark.findOneAndUpdate(
+      { id }, // assuming `id` is a custom string or number field
+      {
+        class: carClass,
+        cylinders,
+        displacement,
+        make,
+        model,
+        year,
+      },
+      { new: true }
+    );
+
+    if (!updatedCar) {
+      return res.status(404).json({ error: 'Car not found' });
+    }
+
+    res.json({
+      message: 'Car bookmark updated',
+      updated: updatedCar,
+    });
+  } catch (err) {
+    console.error('Error updating car:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // ----------------- Motorcycle -----------------
 
@@ -193,6 +273,42 @@ app.delete('/delete/bookmarks/motorcycles/:id', async (req, res) => {
   }
 });
 
+// UPDATE motorcycle bookmark (only MakeName)
+app.put('/update/bookmarks/motorcycles/:id', async (req, res) => {
+  const { id } = req.params;
+  const { MakeName } = req.body;
+
+  if (!MakeName || typeof MakeName !== 'string' || MakeName.trim() === '') {
+    return res.status(400).json({ error: 'Invalid MakeName provided' });
+  }
+
+  try {
+    const updatedBike = await MotorcycleBookmark.findByIdAndUpdate(
+      id,
+      { MakeName },
+      { new: true } 
+    );
+
+    if (!updatedBike) {
+      return res.status(404).json({ error: 'Motorcycle not found' });
+    }
+
+    res.json({
+      message: 'Motorcycle MakeName updated',
+      updated: {
+        _id: updatedBike._id,
+        MakeId: updatedBike.MakeId,
+        MakeName: updatedBike.MakeName,
+        VehicleTypeName: updatedBike.VehicleTypeName,
+        image: updatedBike.image,
+      },
+    });
+  } catch (err) {
+    console.error('Error updating motorcycle:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // ----------------- Model -----------------
 
@@ -246,6 +362,69 @@ app.get('/get/bookmarks/models', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch model bookmarks' });
   }
 });
+
+// DELETE bookmarks model
+app.delete('/delete/bookmarks/models/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedModel = await ModelBookmark.findOneAndDelete({ id: parseInt(id) });
+
+    if (!deletedModel) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    res.json({
+      message: 'Model deleted',
+      deleted: {
+        _id: deletedModel._id,
+        id: deletedModel.id,
+        photographer: deletedModel.photographer,
+        url: deletedModel.url,
+      },
+    });
+  } catch (err) {
+    console.error('Error deleting model:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// UPDATE bookmarked model (only photographer name)
+app.put('/update/bookmarks/models/:id', async (req, res) => {
+  const { id } = req.params;
+  const { photographer } = req.body;
+
+  // Validate input
+  if (!photographer || typeof photographer !== 'string' || photographer.trim() === '') {
+    return res.status(400).json({ error: 'Invalid photographer name provided' });
+  }
+
+  try {
+    const updatedModel = await ModelBookmark.findOneAndUpdate(
+      { id: parseInt(id) },
+      { photographer },
+      { new: true }
+    );
+
+    if (!updatedModel) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    res.json({
+      message: 'Model photographer updated',
+      updated: {
+        _id: updatedModel._id,
+        id: updatedModel.id,
+        photographer: updatedModel.photographer,
+        url: updatedModel.url,
+      },
+    });
+  } catch (err) {
+    console.error('Error updating model:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // ----------------- Start Server -----------------
 app.listen(port, () => {
