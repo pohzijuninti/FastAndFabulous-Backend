@@ -413,7 +413,7 @@ app.get('/api/models', async (req, res) => {
   try {
     const response = await axios.get('https://api.pexels.com/v1/search', {
       headers: { Authorization: PEXELS_API_KEY },
-      params: { query: 'sexy car model', per_page: 80 }
+      params: { query: 'sexy car model', per_page: 40 }
     });
 
     const images = response.data.photos.map(photo => ({
