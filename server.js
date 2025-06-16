@@ -33,6 +33,102 @@ app.get('/', (req, res) => {
 });
 
 
+// ----------------- Login / Register -----------------
+const User = require('./models/User');
+
+// POST /register
+app.post('/register', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if email already exists
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(409).json({ error: 'Email already registered' });
+
+    const newUser = new User({ email, password });
+    await newUser.save();
+
+    res.status(201).json({ message: `'${email}' registered successfully` });
+  } catch (err) {
+    console.error('Registration error:', err.message);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// GET /accounts
+app.get('/accounts', async (req, res) => {
+  try {
+    const users = await User.find({}, 'email'); // only return the 'email' field
+    res.json(users);
+  } catch (err) {
+    console.error('Error fetching users:', err.message);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// DELETE /accounts/:email
+app.delete('/accounts/:email', async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    const deletedUser = await User.findOneAndDelete({ email });
+
+    if (!deletedUser) {
+      return res.status(404).json({ error: `'${email}' not found` });
+    }
+
+    res.json({ message: `'${email}' deleted successfully` });
+  } catch (err) {
+    console.error('Error deleting user:', err.message);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
+// POST /login
+const jwt = require('jsonwebtoken');
+
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if required fields are provided
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Validate password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.status(200).json({
+      message: `'${email}' logged in successfully`,
+      token,
+      userId: user._id
+    });
+  } catch (err) {
+    console.error('Login error:', err); // Log full error object
+    res.status(500).json({ error: 'Login failed due to server error' });
+  }
+});
+
+
+
+
 // ----------------- Car -----------------
 
 // GET Cars API
