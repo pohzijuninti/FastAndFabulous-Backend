@@ -428,6 +428,31 @@ app.get('/api/models', async (req, res) => {
   }
 });
 
+// Dynamic search endpoint
+app.get('/api/images/:keywords', async (req, res) => {
+  const { keywords } = req.params;
+
+  try {
+    const response = await axios.get('https://api.pexels.com/v1/search', {
+      headers: { Authorization: PEXELS_API_KEY },
+      params: {
+        query: keywords,
+        per_page: 40,
+      },
+    });
+
+    const images = response.data.photos.map(photo => ({
+      id: photo.id,
+      url: photo.src.large,
+      photographer: photo.photographer,
+    }));
+
+    res.json(images);
+  } catch (err) {
+    console.error('❌ Error from Pexels API:', err.message);
+    res.status(500).json({ error: 'Failed to fetch images from Pexels' });
+  }
+});
 
 // POST bookmark model
 app.post('/post/bookmarks/models', async (req, res) => {
